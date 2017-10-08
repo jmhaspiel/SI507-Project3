@@ -13,11 +13,60 @@ import requests
 ######### PART 0 #########
 
 # Write your code for Part 0 here.
+try:
+  newman_data = open("newmandata.html",'r').read()
+except:
+  newman_data = requests.get("http://newmantaylor.com/gallery.html").text
+  f = open("newmandata.html",'w')
+  f.write(newman_data)
+  f.close()
+
+soup = BeautifulSoup(newman_data, 'html.parser')
+
+for image in soup.find_all("img"):
+	if image.get("alt"):
+		print(image.get("alt"))
+	else:
+		print("No alternative text provided!")
 
 
 ######### PART 1 #########
 
 # Get the main page data...
+
+try:
+  nps_data = open("nps_gov_data.html",'r').read()
+except:
+  nps_data = requests.get("https://www.nps.gov/index.htm").text
+  f = open("nps_gov_data.html",'w')
+  f.write(nps_data)
+  f.close()
+
+try:
+  nps_ar_data = open("arkansas_data.html",'r').read()
+except:
+  nps_ar_data = requests.get("https://www.nps.gov/state/ar/index.htm").text
+  f = open("arkansas_data.html",'w')
+  f.write(nps_ar_data)
+  f.close()
+
+try:
+  nps_ca_data = open("california_data.html",'r').read()
+except:
+  nps_ca_data = requests.get("https://www.nps.gov/state/ca/index.htm").text
+  f = open("california_data.html",'w')
+  f.write(nps_ca_data)
+  f.close()
+
+try:
+  nps_mi_data = open("michigan_data.html",'r').read()
+except:
+  nps_mi_data = requests.get("https://www.nps.gov/state/mi/index.htm").text
+  f = open("michigan_data.html",'w')
+  f.write(nps_mi_data)
+  f.close()
+  
+# soup = BeautifulSoup(nps_data, 'html.parser')
 
 # Try to get and cache main page data if not yet cached
 # Result of a following try/except block should be that
