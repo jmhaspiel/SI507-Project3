@@ -24,11 +24,11 @@ except:
 soup = BeautifulSoup(newman_data, 'html.parser')
 
 #print statements for problem 0 - dont forget to reactivate
-# for image in soup.find_all("img"):
-# 	if image.get("alt"):
-# 		print(image.get("alt"))
-# 	else:
-# 		print("No alternative text provided!")
+for image in soup.find_all("img"):
+	if image.get("alt"):
+		print(image.get("alt"))
+	else:
+		print("No alternative text provided!")
 
 
 
@@ -106,7 +106,6 @@ except:
 		hrefdata = item.find("a")['href']
 		finalurl = basenprurl+hrefdata
 		if "ca" in finalurl or "ar" in finalurl or "mi" in finalurl:
-			# print (finalurl)
 			ul_search_final.append(finalurl)
 	for i in range(len(ul_search_final)):
 		stateurlvar1 = ul_search_final[0]
@@ -166,13 +165,15 @@ class NationalSite(object):
 	def __init__(self, soupobject):
 		self.soupobject = soupobject
 		self.location = soupobject.h4.text
+		self.print_location = soupobject.h4.text.replace(",", "")
 		self.name = soupobject.h3.a.text
 		try: 
 			self.type = soupobject.h2.text
 		except: 
 			self.type = "None"
-		self.description = soupobject.p.text
+		self.description = soupobject.p.text.replace(",", "").lstrip().rstrip()
 		self.cachename = self.name+"_"+self.location+"_basic_info_cache.html"
+		self.csv_line = '\n"{}","{}","{}","{}"'.format(self.name, self.print_location, self.type, self.description)
 
 	def __str__(self):
 		return "{} | {}".format(self.name, self.location)
@@ -192,11 +193,19 @@ class NationalSite(object):
 			f.close()
 
 		mailingsoup = BeautifulSoup(nationalsite_basic_info, "html.parser")
-		streetaddress = mailingsoup.find("span", {"itemprop":"streetAddress"}).span.text
-		localaddress = mailingsoup.find("span", {"itemprop":"addressLocality"}).text
-		regionaddress = mailingsoup.find("span", {"itemprop":"addressRegion"}).text
-		postaladdress = mailingsoup.find("span", {"itemprop":"postalCode"}).text
-		addresslines = " {} / {} / {} / {}".format(streetaddress, localaddress, regionaddress, postaladdress)
+		try:
+			streetaddress = mailingsoup.find("span", {"itemprop" : "streetAddress"}).span.text
+			localaddress = mailingsoup.find("span", {"itemprop" : "addressLocality"}).text
+			regionaddress = mailingsoup.find("span", {"itemprop" : "addressRegion"}).text
+			postaladdress = mailingsoup.find("span", {"itemprop" : "postalCode"}).text
+		except:
+			streetaddress = ""
+			localaddress = ""
+			regionaddress = ""
+			postaladdress = ""
+		addresslines = "{} / {} / {} / {}".format(streetaddress, localaddress, regionaddress, postaladdress)
+		if len(addresslines) < 20: 
+			addresslines = "None"
 		return addresslines
 
 	def __contains__(self, input):
@@ -204,15 +213,6 @@ class NationalSite(object):
 		if input in self.name:
 			rvalue = True
 		return rvalue
-
-
-
-
-
-
-
-
-# print (test_nationalsite_object)
 
 
 ## Recommendation: to test the class, at various points, uncomment the following code and invoke some of the methods / check out the instance variables of the test instance saved in the variable sample_inst:
@@ -229,20 +229,21 @@ class NationalSite(object):
 
 # HINT: Get a Python list of all the HTML BeautifulSoup instances that represent each park, for each state.
 
+
 arkansas_natl_sites = []
 all_ar_objects = ar_soupobjects.find_all("li", {"class" : "clearfix"})
-print (all_ar_objects)
+for item in all_ar_objects:
+	arkansas_natl_sites.append(NationalSite(item))
 
+california_natl_sites = []
+all_ca_objects = ca_soupobjects.find_all("li", {"class" : "clearfix"})
+for item in all_ca_objects:
+	california_natl_sites.append(NationalSite(item))
 
-
-##Code to help you test these out:
-# for p in california_natl_sites:
-# 	print(p)
-# for a in arkansas_natl_sites:
-# 	print(a)
-# for m in michigan_natl_sites:
-# 	print(m)
-
+michigan_natl_sites = []
+all_mi_objects = mi_soupobjects.find_all("li", {"class" : "clearfix"})
+for item in all_mi_objects:
+	michigan_natl_sites.append(NationalSite(item))
 
 
 ######### PART 4 #########
@@ -252,4 +253,57 @@ print (all_ar_objects)
 ## Note that running this step for ALL your data make take a minute or few to run -- so it's a good idea to test any methods/functions you write with just a little bit of data, so running the program will take less time!
 
 ## Also remember that IF you have None values that may occur, you might run into some problems and have to debug for where you need to put in some None value / error handling!
+
+
+ar_printstr = ""
+for a in arkansas_natl_sites:
+	ar_printstr += a.csv_line+","+a.get_mailing_address().replace(",", "").strip("\n")
+ca_printstr = ""
+for c in california_natl_sites:
+	ca_printstr += c.csv_line+","+c.get_mailing_address().replace(",", "").strip("\n")
+mi_printstr = ""
+for m in michigan_natl_sites:
+	mi_printstr += m.csv_line+","+m.get_mailing_address().replace(",", "").strip("\n")
+
+ar_csv = 'arkansas.csv'
+ca_csv = 'california.csv'
+mi_csv = 'michigan.csv'
+
+try:
+    open(ar_csv, 'r')
+    fcsv = open(ar_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write(ar_printstr)
+    fcsv.close()
+except:
+    columnheaders = ("Name,Location,Type,Description,Address")
+    fcsv = open(ar_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write(columnheaders)
+    fcsv.write(ar_printstr)
+    fcsv.close()
+
+try:
+    open(ca_csv, 'r')
+    fcsv = open(ca_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write(ca_printstr)
+    fcsv.close()
+except:
+    columnheaders = ("Name,Location,Type,Description,Address")
+    fcsv = open(ca_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write(columnheaders)
+    fcsv.write(ca_printstr)
+    fcsv.close()
+
+try:
+    open(mi_csv, 'r')
+    fcsv = open(mi_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write('mi_printstr')
+    fcsv.close()
+except:
+    columnheaders = ("Name,Location,Type,Description,Address")
+    fcsv = open(mi_csv, 'a') #write a new line, do not write over existing data
+    fcsv.write(columnheaders)
+    fcsv.write(mi_printstr)
+    fcsv.close()
+
+
 
